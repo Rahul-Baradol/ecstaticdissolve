@@ -34,7 +34,7 @@ export default function SignUpPage() {
       await createUserWithEmailAndPassword(auth, email, password);
       toast({
         title: "Account Created",
-        description: "Welcome to CampusHub!",
+        description: "Ecstatic Dissolved!",
       });
       router.push("/");
     } catch (err: any) {
@@ -52,7 +52,7 @@ export default function SignUpPage() {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
-            <CardDescription>Join CampusHub to start sharing and discovering resources.</CardDescription>
+            <CardDescription>Join to start sharing and discovering resources.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp} className="space-y-4">

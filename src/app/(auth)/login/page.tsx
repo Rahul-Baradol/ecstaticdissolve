@@ -48,7 +48,7 @@ export default function LoginPage() {
         </div>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-headline">Welcome to CampusHub</CardTitle>
+            <CardTitle className="text-2xl font-headline">Ecstatic Dissolve!</CardTitle>
             <CardDescription>Enter your credentials to access your account.</CardDescription>
           </CardHeader>
           <CardContent>

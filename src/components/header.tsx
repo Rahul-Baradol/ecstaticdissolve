@@ -10,7 +10,7 @@ export default function Header() {
       <div className="container flex h-14 items-center">
         <Link href="/" className="flex items-center space-x-2">
           <BookMarked className="h-6 w-6 text-primary" />
-          <span className="font-bold font-headline text-lg">CampusHub</span>
+          <span className="font-bold font-headline text-lg">Ecstatic Dissolve</span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Button asChild variant="ghost">

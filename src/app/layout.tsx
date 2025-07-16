@@ -6,7 +6,7 @@ import Header from '@/components/header';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'CampusHub - College Resource Sharing',
+  title: 'Resources!',
   description: 'A resource sharing platform for a college, where students can come and view and submit resources.',
 };
 

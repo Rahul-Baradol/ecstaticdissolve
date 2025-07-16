@@ -1,4 +1,4 @@
-# **App Name**: CampusHub
+# **App Name**: Ecstatic Dissolve
 
 ## Core Features:
 
