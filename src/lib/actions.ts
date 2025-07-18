@@ -5,7 +5,7 @@ import { resourceSchema, updateResourceSchema } from "./schema";
 
 export async function getResourcesAction() {
   try {
-    const res = await fetch("http://localhost:3000/api/resources-data", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data`, {
       method: "GET",
       cache: "no-store",
     });
@@ -38,7 +38,7 @@ export async function submitResourceAction(formData: FormData) {
   }
 
   try {
-    const res = await fetch("http://localhost:3000/api/resources", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(validatedFields.data),
@@ -72,7 +72,7 @@ export async function updateResourceAction(resourceId: string, formData: FormDat
   }
 
   try {
-    const res = await fetch(`http://localhost:3000/api/resources/${resourceId}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources/${resourceId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(validatedFields.data),
@@ -92,7 +92,7 @@ export async function updateResourceAction(resourceId: string, formData: FormDat
 
 export async function deleteResourceAction(resourceId: string) {
   try {
-    const res = await fetch(`http://localhost:3000/api/resources/${resourceId}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources/${resourceId}`, {
       method: "DELETE",
     });
 
@@ -109,7 +109,7 @@ export async function deleteResourceAction(resourceId: string) {
 
 export async function starResourceAction(resourceId: string, userId: string) {
   try {
-    const res = await fetch(`http://localhost:3000/api/resources/${resourceId}/star`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources/${resourceId}/star`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
