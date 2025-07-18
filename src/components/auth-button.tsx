@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/components/providers/auth-provider";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,17 +12,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { LayoutDashboard, LogOut, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+
 export function AuthButton() {
-  const { user } = useAuth();
   const router = useRouter();
+  const [user, setUser] = useState<null | { email: string; name: string; image?: string }>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setUser(data);
+      });
+
+  }, []);
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    setUser(null);
     router.push("/");
   };
 
@@ -32,14 +47,9 @@ export function AuthButton() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" asChild>
-            <Link href="/login">Login</Link>
-        </Button>
-        <Button asChild>
-            <Link href="/signup">Sign Up</Link>
-        </Button>
-      </div>
+      <Button asChild>
+        <Link href="/join">Join</Link>
+      </Button>
     );
   }
 
@@ -48,7 +58,7 @@ export function AuthButton() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+            <AvatarImage src={user.image} alt={user.name} />
             <AvatarFallback>
               {user.email ? user.email.charAt(0).toUpperCase() : <UserIcon />}
             </AvatarFallback>
@@ -58,9 +68,7 @@ export function AuthButton() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {user.displayName || "User"}
-            </p>
+            <p className="text-sm font-medium leading-none">{user.name}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>

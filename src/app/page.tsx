@@ -1,10 +1,8 @@
-import { getResources } from '@/lib/db';
+"use client"
+
 import { ResourceList } from '@/components/resource-list';
 
-export default async function Home() {
-  const resources = await getResources();
-  const categories = ['All', ...Array.from(new Set(resources.map((r) => r.category)))];
-
+export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
@@ -15,7 +13,7 @@ export default async function Home() {
           Discover a curated collection of learning materials shared by your peers, ranked by community feedback.
         </p>
       </div>
-      <ResourceList initialResources={resources} categories={categories} />
+      <ResourceList />
     </div>
   );
 }

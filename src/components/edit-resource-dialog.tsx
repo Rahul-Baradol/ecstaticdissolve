@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { updateResourceAction, suggestTagsAction } from "@/lib/actions";
+import { updateResourceAction } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,9 +45,10 @@ interface EditResourceDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onResourceUpdated: (resource: Partial<Resource>) => void;
+  fetchResources: () => Promise<void>;
 }
 
-export function EditResourceDialog({ resource, isOpen, onClose, onResourceUpdated }: EditResourceDialogProps) {
+export function EditResourceDialog({ resource, isOpen, onClose, onResourceUpdated, fetchResources }: EditResourceDialogProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -65,31 +66,6 @@ export function EditResourceDialog({ resource, isOpen, onClose, onResourceUpdate
 
   const { watch, setValue } = form;
   const tags = watch("tags");
-
-  const handleSuggestTags = async () => {
-    const title = form.getValues("title");
-    const description = form.getValues("description");
-    if (!title || !description) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please provide a title and description before suggesting tags.",
-      });
-      return;
-    }
-
-    setIsSuggesting(true);
-    const result = await suggestTagsAction(title, description);
-    setIsSuggesting(false);
-
-    if (result.error) {
-      toast({ variant: "destructive", title: "AI Error", description: result.error });
-    } else if (result.tags) {
-      const newTags = Array.from(new Set([...tags, ...result.tags]));
-      setValue("tags", newTags, { shouldValidate: true });
-      toast({ title: "Tags Suggested", description: "AI has suggested some tags for you." });
-    }
-  };
   
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && tagInput.trim() !== "") {
@@ -123,7 +99,8 @@ export function EditResourceDialog({ resource, isOpen, onClose, onResourceUpdate
        toast({ variant: "destructive", title: "Update Error", description: "Please check the form for errors." });
     } else if (result?.success) {
       toast({ title: "Success!", description: "Your resource has been updated." });
-      onResourceUpdated(values);
+      // onResourceUpdated(values);
+      fetchResources();
       onClose();
     }
   };
@@ -199,14 +176,7 @@ export function EditResourceDialog({ resource, isOpen, onClose, onResourceUpdate
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={handleTagKeyDown}
                         />
-                        <Button type="button" variant="outline" onClick={handleSuggestTags} disabled={isSuggesting}>
-                        {isSuggesting ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Sparkles className="mr-2 h-4 w-4 text-accent" />
-                        )}
-                        Suggest
-                        </Button>
+                        
                     </div>
                     <div className="flex flex-wrap gap-2 pt-2">
                         {tags.map((tag) => (

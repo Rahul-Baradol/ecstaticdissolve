@@ -1,28 +1,50 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { Resource } from "@/types";
+import type { Resource, User } from "@/types";
 import { ResourceCard } from "./resource-card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search } from "lucide-react";
+import { getResourcesAction } from "@/lib/actions";
 
-interface ResourceListProps {
-  initialResources: Resource[];
-  categories: string[];
-}
+export function ResourceList() {
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
-export function ResourceList({ initialResources, categories }: ResourceListProps) {
+  const [user, setUser] = useState<null | User>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [mounted, setMounted] = useState(false);
 
+  async function fetchResources() {
+    const data: Resource[] = await getResourcesAction();
+    setCategories(['All', ...Array.from(new Set(data.map((r: Resource) => r.category)))]);
+    setResources(data);
+  }
+
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); 
+    fetchResources();
+  }, []);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        }
+      } catch {
+        setUser(null);
+      }
+    }
+    fetchUser();
   }, []);
 
   const filteredResources = useMemo(() => {
-    return initialResources.filter((resource) => {
+    return resources.filter((resource) => {
       const matchesCategory =
         selectedCategory === "All" || resource.category === selectedCategory;
       const matchesSearch =
@@ -33,7 +55,7 @@ export function ResourceList({ initialResources, categories }: ResourceListProps
         );
       return matchesCategory && matchesSearch;
     });
-  }, [initialResources, searchTerm, selectedCategory]);
+  }, [resources, searchTerm, selectedCategory]);
 
   return (
     <div>
@@ -66,7 +88,7 @@ export function ResourceList({ initialResources, categories }: ResourceListProps
               className={`transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
               style={{ transitionDelay: `${mounted ? index * 50 : 0}ms` }}
             >
-              <ResourceCard resource={resource} />
+              <ResourceCard user={user} resource={resource} fetchResources={fetchResources} />
             </div>
           ))}
         </div>

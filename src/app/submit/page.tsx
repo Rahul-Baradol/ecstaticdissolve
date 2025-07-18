@@ -1,20 +1,34 @@
 "use client";
 
-import { useAuth } from "@/components/providers/auth-provider";
 import { SubmitResourceForm } from "@/components/submit-resource-form";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { User } from "@/types";
 
 export default function SubmitPage() {
-  const { user, loading } = useAuth();
   const router = useRouter();
+  const [user, setUser] = useState<null | User>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login?redirect=/submit");
+    async function fetchUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        } else {
+          router.push("/join?redirect=/submit");
+        }
+      } catch {
+        router.push("/join?redirect=/submit");
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [user, loading, router]);
+    fetchUser();
+  }, [router]);
 
   if (loading || !user) {
     return (

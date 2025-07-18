@@ -1,6 +1,6 @@
 "use client";
 
-import type { Resource } from "@/types";
+import type { Resource, User } from "@/types";
 import {
   Card,
   CardContent,
@@ -12,21 +12,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ArrowUpRight, Star, UserCircle } from "lucide-react";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "./ui/button";
 import { starResourceAction } from "@/lib/actions";
-import { useAuth } from "./providers/auth-provider";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface ResourceCardProps {
+  user: User | null;
   resource: Resource;
   children?: React.ReactNode;
+  fetchResources: () => Promise<void>;
 }
 
-export function ResourceCard({ resource, children }: ResourceCardProps) {
-  const { user } = useAuth();
+export function ResourceCard({ user, resource, children, fetchResources }: ResourceCardProps) {
   const { toast } = useToast();
-  const hasStarred = user && resource.starredBy?.includes(user.uid);
+  const [hasStarred, setHasStarred] = useState<boolean>((user && resource.starredBy?.includes(user.email)) ? true : false);
 
   const handleStarClick = async () => {
     if (!user) {
@@ -37,38 +38,63 @@ export function ResourceCard({ resource, children }: ResourceCardProps) {
       });
       return;
     }
-    await starResourceAction(resource.id, user.uid);
+
+    try {
+      await starResourceAction(resource.id, user.email);
+      fetchResources();
+      setHasStarred(prevValue => !prevValue);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error Starring Resource",
+        description: "There was an error starring this resource. Please try again later.",
+      });
+      console.error("Error starring resource:", error);
+    }
   };
 
   return (
     <Card className="flex flex-col h-full transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
       <CardHeader>
         <div className="flex justify-between items-start gap-4">
-            <CardTitle className="text-xl font-headline group flex-1">
-              <Link href={resource.url} target="_blank" rel="noopener noreferrer" className="flex items-start justify-between">
-                {resource.title}
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </Link>
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={hasStarred ? "default" : "outline"}
-                size="sm"
-                onClick={handleStarClick}
-                disabled={!user}
-                className="flex items-center gap-2"
-              >
-                <Star className={`h-4 w-4 ${hasStarred ? 'text-yellow-300 fill-yellow-300' : ''}`} />
-                <span>{resource.stars}</span>
-              </Button>
-              {children}
-            </div>
+          <CardTitle className="text-xl font-headline group flex-1">
+            <Link
+              href={resource.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start justify-between"
+            >
+              {resource.title}
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+            </Link>
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={hasStarred ? "default" : "outline"}
+              size="sm"
+              onClick={handleStarClick}
+              disabled={!user}
+              className="flex items-center gap-2"
+            >
+              <Star
+                className={`h-4 w-4 ${hasStarred ? "text-yellow-300 fill-yellow-300" : ""
+                  }`}
+              />
+              <span>{resource.stars}</span>
+            </Button>
+            {children}
+          </div>
         </div>
         <CardDescription className="flex items-center gap-2 text-xs">
-            <UserCircle className="h-4 w-4" />
-            <span>{resource.authorEmail?.split('@')[0] || 'Anonymous'}</span>
-            <span>&middot;</span>
-            <span>Shared {formatDistanceToNow(new Date(resource.createdAt), { addSuffix: true })}</span>
+          <UserCircle className="h-4 w-4" />
+          <span>{resource.authorEmail?.split("@")[0] || "Anonymous"}</span>
+          <span>&middot;</span>
+          <span>
+            Shared{" "}
+            {formatDistanceToNow(new Date(resource.createdAt), {
+              addSuffix: true,
+            })}
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">

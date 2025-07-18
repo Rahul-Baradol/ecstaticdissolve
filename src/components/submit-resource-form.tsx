@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { submitResourceAction, suggestTagsAction } from "@/lib/actions";
+import { submitResourceAction } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,31 +61,6 @@ export function SubmitResourceForm({ userEmail }: { userEmail: string }) {
 
   const { watch, setValue } = form;
   const tags = watch("tags");
-
-  const handleSuggestTags = async () => {
-    const title = form.getValues("title");
-    const description = form.getValues("description");
-    if (!title || !description) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please provide a title and description before suggesting tags.",
-      });
-      return;
-    }
-
-    setIsSuggesting(true);
-    const result = await suggestTagsAction(title, description);
-    setIsSuggesting(false);
-
-    if (result.error) {
-      toast({ variant: "destructive", title: "AI Error", description: result.error });
-    } else if (result.tags) {
-      const newTags = Array.from(new Set([...tags, ...result.tags]));
-      setValue("tags", newTags, { shouldValidate: true });
-      toast({ title: "Tags Suggested", description: "AI has suggested some tags for you." });
-    }
-  };
   
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && tagInput.trim() !== "") {
@@ -203,14 +178,6 @@ export function SubmitResourceForm({ userEmail }: { userEmail: string }) {
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleTagKeyDown}
                 />
-                <Button type="button" variant="outline" onClick={handleSuggestTags} disabled={isSuggesting}>
-                  {isSuggesting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="mr-2 h-4 w-4 text-accent" />
-                  )}
-                  Suggest with AI
-                </Button>
               </div>
               <FormDescription>
                 Add relevant tags to help others find your resource.

@@ -1,35 +1,22 @@
-"use server";
+// "use server"
 
-import { z } from "zod";
-import { suggestResourceTags } from "@/ai/flows/suggest-resource-tags";
-import { addResource, deleteResource, starResource, updateResource } from "./db";
-import { revalidatePath } from "next/cache";
+// import { revalidatePath } from "next/cache";
+import { resourceSchema, updateResourceSchema } from "./schema";
 
-const resourceSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters long."),
-  description: z.string().min(10, "Description must be at least 10 characters long."),
-  url: z.string().url("Please enter a valid URL."),
-  category: z.string().min(1, "Please select a category."),
-  tags: z.array(z.string()).min(1, "Please add at least one tag."),
-  authorEmail: z.string().email().optional(),
-});
-
-const updateResourceSchema = resourceSchema.omit({ url: true, authorEmail: true });
-
-
-export async function suggestTagsAction(title: string, description: string) {
-  if (!title || !description) {
-    return { error: "Title and description are required to suggest tags." };
-  }
+export async function getResourcesAction() {
   try {
-    const result = await suggestResourceTags({
-      resourceTitle: title,
-      resourceDescription: description,
+    const res = await fetch("http://localhost:3000/api/resources-data", {
+      method: "GET",
+      cache: "no-store",
     });
-    return { tags: result.suggestedTags };
+    
+    if (!res.ok) throw new Error();
+    
+    const data = await res.json();
+    return data.resources || [];
   } catch (error) {
-    console.error(error);
-    return { error: "Failed to suggest tags. Please try again." };
+    console.error("Failed to fetch resources:", error);
+    return { error: "Failed to fetch resources. Please try again." };
   }
 }
 
@@ -44,7 +31,6 @@ export async function submitResourceAction(formData: FormData) {
   };
 
   const validatedFields = resourceSchema.safeParse(data);
-
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
@@ -52,15 +38,21 @@ export async function submitResourceAction(formData: FormData) {
   }
 
   try {
-    await addResource(validatedFields.data);
+    const res = await fetch("http://localhost:3000/api/resources", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(validatedFields.data),
+    });
+
+    if (!res.ok) throw new Error();
   } catch (error) {
     return {
       errors: { _form: ["Failed to add resource. Please try again."] },
     };
   }
-  
-  revalidatePath("/");
-  revalidatePath("/dashboard");
+
+  // revalidatePath("/");
+  // revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -80,35 +72,55 @@ export async function updateResourceAction(resourceId: string, formData: FormDat
   }
 
   try {
-    await updateResource(resourceId, validatedFields.data);
-  } catch(error) {
+    const res = await fetch(`http://localhost:3000/api/resources/${resourceId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(validatedFields.data),
+    });
+
+    if (!res.ok) throw new Error();
+  } catch (error) {
     return {
       errors: { _form: ["Failed to update resource. Please try again."] },
     };
   }
 
-  revalidatePath("/");
-  revalidatePath("/dashboard");
+  // revalidatePath("/");
+  // revalidatePath("/dashboard");
   return { success: true };
 }
 
 export async function deleteResourceAction(resourceId: string) {
-    try {
-        await deleteResource(resourceId);
-        revalidatePath("/");
-        revalidatePath("/dashboard");
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to delete resource:", error);
-        return { error: "Failed to delete resource. Please try again." };
-    }
+  try {
+    const res = await fetch(`http://localhost:3000/api/resources/${resourceId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) throw new Error();
+
+    // revalidatePath("/");
+    // revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete resource:", error);
+    return { error: "Failed to delete resource. Please try again." };
+  }
 }
 
 export async function starResourceAction(resourceId: string, userId: string) {
   try {
-    await starResource(resourceId, userId);
-    revalidatePath("/");
-    revalidatePath("/dashboard");
+    const res = await fetch(`http://localhost:3000/api/resources/${resourceId}/star`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+      credentials: "include",
+    });
+
+    if (!res.ok) throw new Error();
+
+    // revalidatePath("/");
+    // revalidatePath("/dashboard");
+    return { success: true };
   } catch (error) {
     console.error("Failed to star resource:", error);
     return { error: "Failed to star resource. Please try again." };
