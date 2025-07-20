@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import Header from '@/components/header';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import GitHubFloatButton from '@/components/Github';
 
 export const metadata: Metadata = {
   title: 'Resources!',
@@ -37,6 +38,7 @@ export default function RootLayout({
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
+        <GitHubFloatButton />
       </body>
     </html>
   );
