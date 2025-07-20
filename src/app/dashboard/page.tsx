@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import type { Resource } from "@/types";
+import type { Resource, ResourceClient } from "@/types";
 import { ResourceCard } from "@/components/resource-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditResourceDialog } from "@/components/edit-resource-dialog";
-import { deleteResourceAction } from "@/lib/actions";
+import { deleteResourceAction, getResourcesByAuthorAction } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -26,39 +26,66 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { QueryClient, QueryClientProvider, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
-export default function DashboardPage() {
+export default function DashboardPageSkeleton() {
+  const client = new QueryClient();
+
+  return <QueryClientProvider client={client}>
+    <DashboardPage />
+  </QueryClientProvider>
+}
+
+export function DashboardPage() {
+  const queryClient = useQueryClient();
+
   const router = useRouter();
   const { toast } = useToast();
 
   const [user, setUser] = useState<null | { email: string, name: string, image?: string }>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [resources, setResources] = useState<Resource[]>([]);
-  const [isLoadingResources, setIsLoadingResources] = useState(false);
-  const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [editingResource, setEditingResource] = useState<ResourceClient | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  async function fetchResources() {
-    if (user?.email) {
-      setIsLoadingResources(true);
-      try {
-        const res = await fetch('/api/resources-by-author', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user.email }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setResources(data.resources);
-        } else {
-          setResources([]);
-        }
-      } catch {
-        setResources([]);
-      } finally {
-        setIsLoadingResources(false);
-      }
-    }
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  async function fetchResources({ pageParam }: { pageParam?: unknown }): Promise<ResourceClient[]> {
+    return await getResourcesByAuthorAction(pageParam as string | undefined);
   }
+
+  const updateResourceInCache = (updatedResource: ResourceClient) => {
+    queryClient.setQueryData(['resources'], (oldData: any) => {
+      if (!oldData) return oldData;
+
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: ResourceClient[]) =>
+          page.map((resource) =>
+            resource.id === updatedResource.id ? { ...resource, ...updatedResource } : resource
+          )
+        ),
+      };
+    });
+  };
+
+  const {
+    fetchNextPage,
+    fetchPreviousPage,
+    hasNextPage,
+    hasPreviousPage,
+    isFetchingNextPage,
+    isFetchingPreviousPage,
+    promise,
+    ...result
+  } = useInfiniteQuery<ResourceClient[], Error>({
+    queryKey: ['resources'],
+    queryFn: fetchResources,
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.length === 0) return undefined; // no more pages
+      return lastPage[lastPage.length - 1].createdAt; // pass last doc id as cursor
+    },
+  })
 
   useEffect(() => {
     async function fetchUser() {
@@ -81,15 +108,37 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
-    fetchResources();
-  }, [user]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 }
+    );
 
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleDelete = async (resourceId: string) => {
     const result = await deleteResourceAction(resourceId);
     if (result.success) {
       toast({ title: "Success", description: "Resource deleted successfully." });
-      setResources(resources.filter((r) => r.id !== resourceId));
+      queryClient.setQueryData(['resources'], (oldData: any) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: ResourceClient[]) =>
+            page.filter((resource) => resource.id !== resourceId)
+          ),
+        };
+      });
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
@@ -113,69 +162,73 @@ export default function DashboardPage() {
           Here are all the learning materials you've contributed to the community.
         </p>
       </div>
-      {isLoadingResources ? (
-        <div className="flex justify-center items-center min-h-[20rem]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : resources.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {resources.map((resource) => (
-            <ResourceCard user={user} key={resource.id} resource={resource} fetchResources={fetchResources} >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditingResource(resource)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
 
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {(result.data && result.data.pages[0].length > 0) ? result.data.pages.map(page => page.map((resource, index) => (
+              <div
+                key={resource.id}
+                className={`transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                style={{ transitionDelay: `${mounted ? index * 50 : 0}ms` }}
+              >
+                <ResourceCard user={user} key={resource.id} resource={resource} updateResourceInCache={updateResourceInCache} >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditingResource(resource)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
                       </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your resource.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(resource.id)}>Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </ResourceCard>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <h2 className="text-2xl font-semibold">No Resources Shared Yet</h2>
-          <p className="text-muted-foreground mt-2">
-            It looks like you haven't shared any resources. Why not submit one now?
-          </p>
-          <Button onClick={() => router.push('/submit')} className="mt-4">Submit a Resource</Button>
-        </div>
-      )}
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your resource.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(resource.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </ResourceCard>
+              </div>
+            ))
+        ) : <></>}
+      </div>
+
+      {
+        !(result.data && result.data.pages[0].length > 0) ? <div className="text-center py-16">
+            <h2 className="text-2xl font-semibold">No Resources Shared Yet</h2>
+            <p className="text-muted-foreground mt-2">
+              It looks like you haven't shared any resources. Why not submit one now?
+            </p>
+            <Button onClick={() => router.push('/submit')} className="mt-4">Submit a Resource</Button>
+          </div> : <></>
+      }
+
+      <div ref={loadMoreRef} style={{ height: 1 }} />
+
       {editingResource && (
         <EditResourceDialog
           resource={editingResource}
           isOpen={!!editingResource}
           onClose={() => setEditingResource(null)}
-          onResourceUpdated={(updatedResource) => {
-            setResources(resources.map(r => r.id === updatedResource.id ? { ...r, ...updatedResource } : r));
-          }}
-          fetchResources={fetchResources}
+          updateResourceInCache={updateResourceInCache}
         />
       )}
     </div>

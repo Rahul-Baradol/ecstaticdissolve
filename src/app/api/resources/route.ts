@@ -10,8 +10,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ errors: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
+  const email = req.headers.get('userid');
+  if (!email) {
+    return NextResponse.json({ error: 'Missing email in session token' }, { status: 400 });
+  }
+
   try {
-    await addResource(parsed.data);
+    await addResource({
+      ...parsed.data,
+      authorEmail: email,
+    });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Failed to add resource.' }, { status: 500 });

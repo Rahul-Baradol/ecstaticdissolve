@@ -46,7 +46,7 @@ export default function SubmitPage() {
           Share a valuable learning material with the community.
         </p>
       </div>
-      <SubmitResourceForm userEmail={user.email!} />
+      <SubmitResourceForm />
     </div>
   );
 }

@@ -27,7 +27,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import type { Resource } from "@/types";
+import type { Resource, ResourceClient } from "@/types";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters long."),
@@ -41,14 +41,13 @@ type FormValues = z.infer<typeof formSchema>;
 const categories = ["Web Development", "Machine Learning", "Systems", "Languages", "Databases", "DevOps"];
 
 interface EditResourceDialogProps {
-  resource: Resource;
+  resource: ResourceClient;
   isOpen: boolean;
   onClose: () => void;
-  onResourceUpdated: (resource: Partial<Resource>) => void;
-  fetchResources: () => Promise<void>;
+  updateResourceInCache: (updatedResource: ResourceClient) => void;
 }
 
-export function EditResourceDialog({ resource, isOpen, onClose, onResourceUpdated, fetchResources }: EditResourceDialogProps) {
+export function EditResourceDialog({ resource, isOpen, onClose, updateResourceInCache }: EditResourceDialogProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -100,7 +99,8 @@ export function EditResourceDialog({ resource, isOpen, onClose, onResourceUpdate
     } else if (result?.success) {
       toast({ title: "Success!", description: "Your resource has been updated." });
       // onResourceUpdated(values);
-      fetchResources();
+      // fetchResources();
+      updateResourceInCache({ ...resource, ...values });
       onClose();
     }
   };

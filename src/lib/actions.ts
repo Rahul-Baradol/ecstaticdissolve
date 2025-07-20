@@ -1,22 +1,71 @@
-// "use server"
-
-// import { revalidatePath } from "next/cache";
 import { resourceSchema, updateResourceSchema } from "./schema";
 
-export async function getResourcesAction() {
+export async function getResourceByIdAction(docId: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resource-by-id?docId=${docId}`, {
       method: "GET",
       cache: "no-store",
     });
-    
+
     if (!res.ok) throw new Error();
-    
+
+    const data = await res.json();
+    return data.resource;
+  } catch (error) {
+    console.error("Failed to fetch resource by ID:", error);
+    return { error: "Failed to fetch resource. Please try again." };
+  }
+}
+
+export async function getResourcesAction(docId?: string, searchTerm?: string) {
+  try {
+    let res;
+
+    if (docId) {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data?docId=${docId}&searchTerm=${searchTerm}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+    } else {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data?searchTerm=${searchTerm}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+    }
+
+    if (!res.ok) throw new Error();
+
     const data = await res.json();
     return data.resources || [];
   } catch (error) {
     console.error("Failed to fetch resources:", error);
     return { error: "Failed to fetch resources. Please try again." };
+  }
+}
+
+export async function getResourcesByAuthorAction(docId?: string) {
+  try {
+    let res;
+
+    if (docId) {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-by-author?lastCreatedAt=${docId}`, {
+        method: "GET",
+        credentials: "include",
+      });
+    } else {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-by-author`, {
+        method: "GET",
+        credentials: "include",
+      });
+    }
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+    return data.resources || [];
+  } catch (error) {
+    console.error("Failed to fetch resources by author:", error);
+    return { error: "Failed to fetch resources by author. Please try again." };
   }
 }
 
@@ -26,8 +75,7 @@ export async function submitResourceAction(formData: FormData) {
     description: formData.get("description"),
     url: formData.get("url"),
     category: formData.get("category"),
-    tags: formData.getAll("tags[]"),
-    authorEmail: formData.get("authorEmail"),
+    tags: formData.getAll("tags[]")
   };
 
   const validatedFields = resourceSchema.safeParse(data);
@@ -51,8 +99,6 @@ export async function submitResourceAction(formData: FormData) {
     };
   }
 
-  // revalidatePath("/");
-  // revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -85,8 +131,6 @@ export async function updateResourceAction(resourceId: string, formData: FormDat
     };
   }
 
-  // revalidatePath("/");
-  // revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -98,8 +142,6 @@ export async function deleteResourceAction(resourceId: string) {
 
     if (!res.ok) throw new Error();
 
-    // revalidatePath("/");
-    // revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete resource:", error);
@@ -107,19 +149,15 @@ export async function deleteResourceAction(resourceId: string) {
   }
 }
 
-export async function starResourceAction(resourceId: string, userId: string) {
+export async function starResourceAction(resourceId: string) {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources/${resourceId}/star`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
       credentials: "include",
     });
 
     if (!res.ok) throw new Error();
 
-    // revalidatePath("/");
-    // revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Failed to star resource:", error);

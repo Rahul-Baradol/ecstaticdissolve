@@ -12,8 +12,6 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
 
     const params = await context.params;
 
-    console.log(body)
-
     try {
         await updateResource(params.id, parsed.data);
         return NextResponse.json({ success: true });
