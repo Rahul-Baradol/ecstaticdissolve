@@ -12,16 +12,15 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 export function ResourceList() {
   const queryClient = useQueryClient();
 
+  const [flag, setFlag] = useState<boolean>(false);
   const [user, setUser] = useState<null | User>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [mounted, setMounted] = useState(false);
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   async function fetchResources({ pageParam }: { pageParam?: unknown }): Promise<ResourceClient[]> {
-    const data: ResourceClient[] = await getResourcesAction(pageParam as string | undefined);
-    console.log("Fetched resources: ", data);
+    const data: ResourceClient[] = await getResourcesAction(pageParam as string | undefined, searchTerm);
     return data;
   }
 
@@ -92,19 +91,14 @@ export function ResourceList() {
     fetchUser();
   }, []);
 
-  // const filteredResources = useMemo(() => {
-  //   return resources.filter((resource) => {
-  //     const matchesCategory =
-  //       selectedCategory === "All" || resource.category === selectedCategory;
-  //     const matchesSearch =
-  //       resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //       resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //       resource.tags.some((tag) =>
-  //         tag.toLowerCase().includes(searchTerm.toLowerCase())
-  //       );
-  //     return matchesCategory && matchesSearch;
-  //   });
-  // }, [resources, searchTerm, selectedCategory]);
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const searchValue = searchTerm.trim().toLowerCase();
+      queryClient.removeQueries({ queryKey: ['resources'] });
+      setFlag(flag => !flag);
+    }
+  } 
 
   return (
     <div>
@@ -115,6 +109,7 @@ export function ResourceList() {
             placeholder="Search resources..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => handleSearch(e)}
             className="pl-10 w-full"
           />
         </div>

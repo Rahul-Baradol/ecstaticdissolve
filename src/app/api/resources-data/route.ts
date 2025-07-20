@@ -22,9 +22,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const docId = searchParams.get('docId');
+    const searchTerm = searchParams.get('searchTerm') || '';
     const lastDocSnap = docId ? await getResourceSnapshotById(docId) : null;
 
-    const data = await getResources(lastDocSnap);
+    const data = await getResources(searchTerm.trim(), lastDocSnap);
 
     const email = typeof authData?.payload.email === "string" ? authData.payload.email : null;
     const resources: ResourceClient[] = data.resources.map((resource) => {

@@ -17,17 +17,17 @@ export async function getResourceByIdAction(docId: string) {
   }
 }
 
-export async function getResourcesAction(docId?: string) {
+export async function getResourcesAction(docId?: string, searchTerm?: string) {
   try {
     let res;
 
     if (docId) {
-      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data?docId=${docId}`, {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data?docId=${docId}&searchTerm=${searchTerm}`, {
         method: "GET",
         cache: "no-store",
       });
     } else {
-      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data`, {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data?searchTerm=${searchTerm}`, {
         method: "GET",
         cache: "no-store",
       });

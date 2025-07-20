@@ -50,7 +50,6 @@ export function DashboardPage() {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   async function fetchResources({ pageParam }: { pageParam?: unknown }): Promise<ResourceClient[]> {
-    console.log("Fetching resources with pageParam:", pageParam);
     return await getResourcesByAuthorAction(pageParam as string | undefined);
   }
 

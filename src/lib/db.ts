@@ -21,15 +21,19 @@ function docToResource(doc: any): Resource {
     };
 }
 
-export async function getResources(docSnap: QueryDocumentSnapshot<DocumentData, DocumentData> | null | undefined): Promise<{ count: number, resources: Resource[] }> {
+export async function getResources(searchTerm: string, docSnap: QueryDocumentSnapshot<DocumentData, DocumentData> | null | undefined): Promise<{ count: number, resources: Resource[] }> {
     if (docSnap === undefined) {
         return { count: 0, resources: [] };
     }
 
     let q;
 
-    if (docSnap) {
+    if (docSnap && searchTerm.length > 0) {
+        q = query(resourcesCollection, where('title', '>=', searchTerm), where('title', '<=', searchTerm + '\uf8ff'), orderBy('stars', 'desc'), orderBy("createdAt", "desc"), startAfter(docSnap), limit(pageSize));
+    } else if (docSnap && searchTerm.length === 0) {
         q = query(resourcesCollection, orderBy('stars', 'desc'), orderBy("createdAt", "desc"), startAfter(docSnap), limit(pageSize));
+    } else if (!docSnap && searchTerm.length > 0) {
+        q = query(resourcesCollection, where('title', '>=', searchTerm), where('title', '<=', searchTerm + '\uf8ff'), orderBy('stars', 'desc'), orderBy("createdAt", "desc"), limit(pageSize));
     } else {
         q = query(resourcesCollection, orderBy('stars', 'desc'), orderBy("createdAt", "desc"), limit(pageSize));
     }
