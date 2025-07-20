@@ -56,7 +56,7 @@ export function ResourceCard({ user, resource, children, updateResourceInCache }
     <Card className="flex flex-col h-full transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
       <CardHeader>
         <div className="flex justify-between items-start gap-4">
-          <CardTitle className="text-xl font-headline group flex-1">
+          <CardTitle className="text-xl font-headline group flex-1 overflow-hidden">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
