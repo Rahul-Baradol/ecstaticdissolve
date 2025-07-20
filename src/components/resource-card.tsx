@@ -16,7 +16,6 @@ import { formatDistanceToNow } from "date-fns";
 import { Button } from "./ui/button";
 import { getResourceByIdAction, starResourceAction } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 
 interface ResourceCardProps {
   user: User | null;

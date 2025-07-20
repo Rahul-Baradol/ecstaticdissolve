@@ -47,6 +47,32 @@ export async function getResourcesAction(docId?: string) {
   }
 }
 
+export async function getResourcesByAuthorAction(docId?: string) {
+  try {
+    let res;
+
+    if (docId) {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-by-author?lastCreatedAt=${docId}`, {
+        method: "GET",
+        credentials: "include",
+      });
+    } else {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-by-author`, {
+        method: "GET",
+        credentials: "include",
+      });
+    }
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+    return data.resources || [];
+  } catch (error) {
+    console.error("Failed to fetch resources by author:", error);
+    return { error: "Failed to fetch resources by author. Please try again." };
+  }
+}
+
 export async function submitResourceAction(formData: FormData) {
   const data = {
     title: formData.get("title"),

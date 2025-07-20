@@ -12,9 +12,6 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 export function ResourceList() {
   const queryClient = useQueryClient();
 
-  // const [resources, setResources] = useState<Resource[]>([]);
-  const [categories, setCategories] = useState<string[]>(["All", "Web Development", "Machine Learning", "Systems", "Languages", "Databases", "DevOps"]);
-
   const [user, setUser] = useState<null | User>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");

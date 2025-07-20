@@ -1,16 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getResourcesByAuthor } from '@/lib/db';
-import type { Resource } from '@/types';
+import { getResourcesByAuthor, getResourceSnapshotById } from '@/lib/db';
+import type { Resource, ResourceClient } from '@/types';
+import { jwtVerify } from 'jose';
+import { Timestamp } from 'firebase/firestore';
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const token = req.cookies.get('session')?.value;
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let authData = null;
+
   try {
-    const { email } = await req.json();
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    authData = await jwtVerify(token, secret);
+  } catch (error) {
+    console.error("Token verification failed: ", error);
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const email = typeof authData.payload.email === 'string' ? authData.payload.email : null;
     if (!email) {
-      return NextResponse.json({ error: 'Missing email in request body' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing email in session token' }, { status: 400 });
     }
 
-    const resources: Resource[] = await getResourcesByAuthor(email);
-    return NextResponse.json({ resources });
+    const { searchParams } = new URL(req.url);
+    const lastCreatedAt = searchParams.get('lastCreatedAt');
+
+    let data: Resource[] | null;
+
+    if (lastCreatedAt) {
+      const lastCreatedAtTimestamp = Timestamp.fromDate(new Date(lastCreatedAt));
+      data = await getResourcesByAuthor(email, lastCreatedAtTimestamp);
+    } else {
+      data = await getResourcesByAuthor(email);
+    }
+
+    const resources: ResourceClient[] = data.map((resource) => {
+      let { starredBy, ...rest } = resource;
+      return {
+        ...rest,
+        isStarred: email ? resource.starredBy.includes(email) : false,
+      };
+    });
+
+    return NextResponse.json({ count: resources.length, resources });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch resources' }, { status: 500 });
   }

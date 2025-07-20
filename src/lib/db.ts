@@ -58,8 +58,15 @@ export async function getResourceSnapshotById(id: string): Promise<QueryDocument
     return null;
 }
 
-export async function getResourcesByAuthor(email: string): Promise<Resource[]> {
-    const q = query(resourcesCollection, where('authorEmail', '==', email), orderBy('createdAt', 'desc'));
+export async function getResourcesByAuthor(email: string, lastCreatedAt?: Timestamp): Promise<Resource[]> {
+    let q;
+
+    if (lastCreatedAt) {
+        q = query(resourcesCollection, where('authorEmail', '==', email), orderBy('createdAt', 'desc'), startAfter(lastCreatedAt), limit(pageSize));
+    } else {
+        q = query(resourcesCollection, where('authorEmail', '==', email), orderBy('createdAt', 'desc'), limit(pageSize));
+    }
+
     const querySnapshot = await getDocs(q);
     const resources = querySnapshot.docs.map(docToResource);
     return resources;
