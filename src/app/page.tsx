@@ -1,8 +1,11 @@
 "use client"
 
 import { ResourceList } from '@/components/resource-list';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 export default function Home() {
+  const queryClient = new QueryClient();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
@@ -13,7 +16,10 @@ export default function Home() {
           Discover a curated collection of learning materials shared by your peers, ranked by community feedback.
         </p>
       </div>
-      <ResourceList />
+
+      <QueryClientProvider client={queryClient}>
+        <ResourceList />
+      </QueryClientProvider>
     </div>
   );
 }

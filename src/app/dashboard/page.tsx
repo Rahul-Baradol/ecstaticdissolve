@@ -120,7 +120,7 @@ export default function DashboardPage() {
       ) : resources.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {resources.map((resource) => (
-            <ResourceCard user={user} key={resource.id} resource={resource} fetchResources={fetchResources} >
+            <ResourceCard user={user} key={resource.id} resource={resource} >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">

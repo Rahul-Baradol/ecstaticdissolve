@@ -1,6 +1,6 @@
 "use client";
 
-import type { Resource, User } from "@/types";
+import type { Resource, ResourceClient, User } from "@/types";
 import {
   Card,
   CardContent,
@@ -14,20 +14,19 @@ import Link from "next/link";
 import { ArrowUpRight, Star, UserCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "./ui/button";
-import { starResourceAction } from "@/lib/actions";
+import { getResourceByIdAction, starResourceAction } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 interface ResourceCardProps {
   user: User | null;
-  resource: Resource;
+  resource: ResourceClient;
   children?: React.ReactNode;
-  fetchResources: () => Promise<void>;
+  updateResourceInCache: (updatedResource: ResourceClient) => void;
 }
 
-export function ResourceCard({ user, resource, children, fetchResources }: ResourceCardProps) {
+export function ResourceCard({ user, resource, children, updateResourceInCache }: ResourceCardProps) {
   const { toast } = useToast();
-  const [hasStarred, setHasStarred] = useState<boolean>((user && resource.starredBy?.includes(user.email)) ? true : false);
 
   const handleStarClick = async () => {
     if (!user) {
@@ -41,8 +40,8 @@ export function ResourceCard({ user, resource, children, fetchResources }: Resou
 
     try {
       await starResourceAction(resource.id, user.email);
-      fetchResources();
-      setHasStarred(prevValue => !prevValue);
+      const updatedResource = await getResourceByIdAction(resource.id);
+      updateResourceInCache(updatedResource);
     } catch (error) {
       toast({
         variant: "destructive",
@@ -70,14 +69,14 @@ export function ResourceCard({ user, resource, children, fetchResources }: Resou
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button
-              variant={hasStarred ? "default" : "outline"}
+              variant={resource.isStarred ? "default" : "outline"}
               size="sm"
               onClick={handleStarClick}
               disabled={!user}
               className="flex items-center gap-2"
             >
               <Star
-                className={`h-4 w-4 ${hasStarred ? "text-yellow-300 fill-yellow-300" : ""
+                className={`h-4 w-4 ${resource.isStarred ? "text-yellow-300 fill-yellow-300" : ""
                   }`}
               />
               <span>{resource.stars}</span>

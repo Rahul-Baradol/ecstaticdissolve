@@ -1,17 +1,44 @@
 // "use server"
 
 // import { revalidatePath } from "next/cache";
+import { ResourceClient } from "@/types";
 import { resourceSchema, updateResourceSchema } from "./schema";
 
-export async function getResourcesAction() {
+export async function getResourceByIdAction(docId: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resource-by-id?docId=${docId}`, {
       method: "GET",
       cache: "no-store",
     });
-    
+
     if (!res.ok) throw new Error();
-    
+
+    const data = await res.json();
+    return data.resource;
+  } catch (error) {
+    console.error("Failed to fetch resource by ID:", error);
+    return { error: "Failed to fetch resource. Please try again." };
+  }
+}
+
+export async function getResourcesAction(docId?: string) {
+  try {
+    let res;
+
+    if (docId) {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data?docId=${docId}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+    } else {
+      res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources-data`, {
+        method: "GET",
+        cache: "no-store",
+      });
+    }
+
+    if (!res.ok) throw new Error();
+
     const data = await res.json();
     return data.resources || [];
   } catch (error) {
