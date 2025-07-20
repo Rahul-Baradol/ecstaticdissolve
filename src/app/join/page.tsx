@@ -74,7 +74,7 @@ export default function LoginPage() {
         </div>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-headline">Join CampusHub</CardTitle>
+            <CardTitle className="text-2xl font-headline">Be part of the Dissolve!</CardTitle>
             <CardDescription>
               Enter your email below to sign in or create an account.
             </CardDescription>
