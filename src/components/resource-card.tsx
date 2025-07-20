@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Button } from "./ui/button";
 import { getResourceByIdAction, starResourceAction } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface ResourceCardProps {
   user: User | null;
@@ -56,15 +57,22 @@ export function ResourceCard({ user, resource, children, updateResourceInCache }
       <CardHeader>
         <div className="flex justify-between items-start gap-4">
           <CardTitle className="text-xl font-headline group flex-1">
-            <Link
-              href={resource.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start justify-between"
-            >
-              {resource.title}
-              <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-            </Link>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Link
+                    href={resource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start justify-between"
+                  >
+                    {resource.title}
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>{resource.url}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button

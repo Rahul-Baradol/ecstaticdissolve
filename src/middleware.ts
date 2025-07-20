@@ -39,6 +39,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    '/submit',
     '/dashboard',
     '/api/auth/me',
     '/api/resources',

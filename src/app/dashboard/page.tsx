@@ -209,16 +209,18 @@ export function DashboardPage() {
                 </ResourceCard>
               </div>
             ))
-        ) : (
-          <div className="text-center py-16">
+        ) : <></>}
+      </div>
+
+      {
+        !(result.data && result.data.pages[0].length > 0) ? <div className="text-center py-16">
             <h2 className="text-2xl font-semibold">No Resources Shared Yet</h2>
             <p className="text-muted-foreground mt-2">
               It looks like you haven't shared any resources. Why not submit one now?
             </p>
             <Button onClick={() => router.push('/submit')} className="mt-4">Submit a Resource</Button>
-          </div>
-        )}
-      </div>
+          </div> : <></>
+      }
 
       <div ref={loadMoreRef} style={{ height: 1 }} />
 
