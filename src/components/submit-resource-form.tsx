@@ -42,11 +42,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 const categories = ["Web Development", "Machine Learning", "Systems", "Languages", "Databases", "DevOps"];
 
-export function SubmitResourceForm({ userEmail }: { userEmail: string }) {
+export function SubmitResourceForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuggesting, setIsSuggesting] = useState(false);
   const [tagInput, setTagInput] = useState("");
 
   const form = useForm<FormValues>({
@@ -86,7 +85,6 @@ export function SubmitResourceForm({ userEmail }: { userEmail: string }) {
         formData.append(key, String(value));
       }
     });
-    formData.append('authorEmail', userEmail);
     
     const result = await submitResourceAction(formData);
     setIsSubmitting(false);

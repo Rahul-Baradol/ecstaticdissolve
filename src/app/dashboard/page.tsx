@@ -130,7 +130,16 @@ export function DashboardPage() {
     const result = await deleteResourceAction(resourceId);
     if (result.success) {
       toast({ title: "Success", description: "Resource deleted successfully." });
-      // setResources(resources.filter((r) => r.id !== resourceId));
+      queryClient.setQueryData(['resources'], (oldData: any) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: ResourceClient[]) =>
+            page.filter((resource) => resource.id !== resourceId)
+          ),
+        };
+      });
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
@@ -155,62 +164,61 @@ export function DashboardPage() {
         </p>
       </div>
 
-      {(result.data && result.data.pages[0].length > 0) ? result.data.pages.map((page, pageIndex) => (
-        <div key={pageIndex} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {page.map((resource, index) => (
-            <div
-              key={resource.id}
-              className={`transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              style={{ transitionDelay: `${mounted ? index * 50 : 0}ms` }}
-            >
-              <ResourceCard user={user} key={resource.id} resource={resource} updateResourceInCache={updateResourceInCache} >
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setEditingResource(resource)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {(result.data && result.data.pages[0].length > 0) ? result.data.pages.map(page => page.map((resource, index) => (
+              <div
+                key={resource.id}
+                className={`transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                style={{ transitionDelay: `${mounted ? index * 50 : 0}ms` }}
+              >
+                <ResourceCard user={user} key={resource.id} resource={resource} updateResourceInCache={updateResourceInCache} >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditingResource(resource)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
 
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your resource.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(resource.id)}>Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </ResourceCard>
-            </div>
-          ))}
-        </div >
-      )) : (
-        <div className="text-center py-16">
-          <h2 className="text-2xl font-semibold">No Resources Shared Yet</h2>
-          <p className="text-muted-foreground mt-2">
-            It looks like you haven't shared any resources. Why not submit one now?
-          </p>
-          <Button onClick={() => router.push('/submit')} className="mt-4">Submit a Resource</Button>
-        </div>
-      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your resource.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(resource.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </ResourceCard>
+              </div>
+            ))
+        ) : (
+          <div className="text-center py-16">
+            <h2 className="text-2xl font-semibold">No Resources Shared Yet</h2>
+            <p className="text-muted-foreground mt-2">
+              It looks like you haven't shared any resources. Why not submit one now?
+            </p>
+            <Button onClick={() => router.push('/submit')} className="mt-4">Submit a Resource</Button>
+          </div>
+        )}
+      </div>
 
       <div ref={loadMoreRef} style={{ height: 1 }} />
 

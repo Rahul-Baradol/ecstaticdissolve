@@ -38,7 +38,7 @@ export function ResourceCard({ user, resource, children, updateResourceInCache }
     }
 
     try {
-      await starResourceAction(resource.id, user.email);
+      await starResourceAction(resource.id);
       const updatedResource = await getResourceByIdAction(resource.id);
       updateResourceInCache(updatedResource);
     } catch (error) {

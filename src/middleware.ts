@@ -21,8 +21,16 @@ export async function middleware(req: NextRequest) {
 
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    await jwtVerify(token, secret);
-    return NextResponse.next();
+    const data = await jwtVerify(token, secret);
+    const email = typeof data.payload.email === 'string' ? data.payload.email : null;
+
+    const response = NextResponse.next();
+    if (!email) {
+      return redirectToJoin(req);
+    }
+    
+    response.headers.set('userid', email);
+    return response;
   } catch (error) {
     console.error("Token verification failed:", error);
     return redirectToJoin(req);

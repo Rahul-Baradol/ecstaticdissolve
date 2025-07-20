@@ -5,23 +5,8 @@ import { jwtVerify } from 'jose';
 import { Timestamp } from 'firebase/firestore';
 
 export async function GET(req: NextRequest) {
-  const token = req.cookies.get('session')?.value;
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  let authData = null;
-
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    authData = await jwtVerify(token, secret);
-  } catch (error) {
-    console.error("Token verification failed: ", error);
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  try {
-    const email = typeof authData.payload.email === 'string' ? authData.payload.email : null;
+    const email = req.headers.get('userid');
     if (!email) {
       return NextResponse.json({ error: 'Missing email in session token' }, { status: 400 });
     }

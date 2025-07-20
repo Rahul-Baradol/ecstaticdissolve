@@ -1,7 +1,3 @@
-// "use server"
-
-// import { revalidatePath } from "next/cache";
-import { ResourceClient } from "@/types";
 import { resourceSchema, updateResourceSchema } from "./schema";
 
 export async function getResourceByIdAction(docId: string) {
@@ -79,8 +75,7 @@ export async function submitResourceAction(formData: FormData) {
     description: formData.get("description"),
     url: formData.get("url"),
     category: formData.get("category"),
-    tags: formData.getAll("tags[]"),
-    authorEmail: formData.get("authorEmail"),
+    tags: formData.getAll("tags[]")
   };
 
   const validatedFields = resourceSchema.safeParse(data);
@@ -104,8 +99,6 @@ export async function submitResourceAction(formData: FormData) {
     };
   }
 
-  // revalidatePath("/");
-  // revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -138,8 +131,6 @@ export async function updateResourceAction(resourceId: string, formData: FormDat
     };
   }
 
-  // revalidatePath("/");
-  // revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -151,8 +142,6 @@ export async function deleteResourceAction(resourceId: string) {
 
     if (!res.ok) throw new Error();
 
-    // revalidatePath("/");
-    // revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete resource:", error);
@@ -160,19 +149,15 @@ export async function deleteResourceAction(resourceId: string) {
   }
 }
 
-export async function starResourceAction(resourceId: string, userId: string) {
+export async function starResourceAction(resourceId: string) {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/resources/${resourceId}/star`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
       credentials: "include",
     });
 
     if (!res.ok) throw new Error();
 
-    // revalidatePath("/");
-    // revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Failed to star resource:", error);
