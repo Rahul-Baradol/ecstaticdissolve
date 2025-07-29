@@ -7,6 +7,7 @@ export const resourceSchema = z.object({
   category: z.string().min(1, "Please select a category."),
   tags: z.array(z.string()).min(1, "Please add at least one tag."),
   authorEmail: z.string().email().optional(),
+  reviewed: z.boolean().optional(), 
 });
 
 export const updateResourceSchema = resourceSchema.omit({ url: true, authorEmail: true });

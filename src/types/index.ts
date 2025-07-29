@@ -9,6 +9,7 @@ export type Resource = {
   createdAt: Date;
   stars: number;
   starredBy: string[];
+  reviewed?: boolean; // Optional field for review status
 };
 
 export type ResourceClient = {

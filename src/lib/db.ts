@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc, query, orderBy, where, doc, runTransaction
 import type { Resource } from "@/types";
 
 const resourcesCollection = collection(db, 'resources');
+const reviewersCollection = collection(db, 'reviewers');
 const pageSize = 6;
 
 function docToResource(doc: any): Resource {
@@ -18,6 +19,7 @@ function docToResource(doc: any): Resource {
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         stars: data.stars,
         starredBy: data.starredBy,
+        reviewed: data.reviewed || false, // Ensure reviewed is set 
     };
 }
 
@@ -82,6 +84,7 @@ export async function addResource(resourceData: Omit<Resource, 'id' | 'createdAt
         createdAt: serverTimestamp(),
         stars: 0,
         starredBy: [],
+        reviewed: false, 
     };
     const docRef = await addDoc(resourcesCollection, newResourceData);
 
@@ -91,6 +94,7 @@ export async function addResource(resourceData: Omit<Resource, 'id' | 'createdAt
         createdAt: new Date(), // Approximate client-side date
         stars: 0,
         starredBy: [],
+        reviewed: false, 
     };
 }
 
@@ -141,4 +145,28 @@ export async function starResource(resourceId: string, userId: string): Promise<
         console.error("Transaction failed: ", error);
         throw error;
     }
+}
+
+
+export async function getReviewers(): Promise<string[]> {
+    const querySnapshot = await getDocs(reviewersCollection);
+    return querySnapshot.docs.map(doc => doc.data().email);
+}
+
+export async function setReviewedStatus(resourceId: string, status: boolean): Promise<boolean> {
+    const resourceRef = doc(db, 'resources', resourceId);
+    await updateDoc(resourceRef, { reviewed: status });
+    return Promise.resolve(true);
+}
+
+export async function addReviewer(email: string): Promise<void> {
+    const newReviewer = { email };
+    await addDoc(reviewersCollection, newReviewer);
+}
+export async function removeReviewer(email: string): Promise<void> {
+    const q = query(reviewersCollection, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+    });
 }
